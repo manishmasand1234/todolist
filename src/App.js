@@ -1,79 +1,96 @@
-import logo from './logo.svg';
-import './App.css';
-import {useState} from 'react';
-
+import { useState, useRef } from "react";
+import "./App.css";
 
 function App() {
+  const [todolist, setTodolist] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+  const [editIndex, setEditIndex] = useState(null);
+  const inputRef = useRef(null);
 
-  let [todolist, setTodolist] = useState([]);
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-
-  let saveToDoList = (event) =>{
-
-    
-    
-    let toname = event.target.toname.value;
-
-    if(!todolist.includes(toname)){
-        let finalDolist = [...todolist, toname]
-        setTodolist(finalDolist)
-    }
-    else{
-      alert(toname + " Already Added!!!!!!!!!!!!!")
+    if (inputValue.trim() === "") {
+      alert("Task cannot be empty!");
+      return;
     }
 
-     event.preventDefault();
-  }
+    if (editIndex !== null) {
+      const updatedList = [...todolist];
+      updatedList[editIndex] = inputValue;
+      setTodolist(updatedList);
+      setEditIndex(null);
+    } else {
+      if (!todolist.includes(inputValue)) {
+        setTodolist([...todolist, inputValue]);
+      } else {
+        alert(inputValue + " Already Added!");
+      }
+    }
 
+    setInputValue("");
+  };
 
-  let list = todolist.map((value, index) =>{
-    
-    return (
-      <ToDoListItems value={value} key={index} indexNumber={index} todolist={todolist} setTodolist={setTodolist} />
-    )
-  })
+  const handleEdit = (index) => {
+    setInputValue(todolist[index]);
+    setEditIndex(index);
+    setTimeout(() => inputRef.current.focus(), 100);
+  };
 
+  const handleDelete = (index) => {
+    setTodolist(todolist.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="App">
-            <h1>TODO LIST</h1>
-            <form onSubmit={saveToDoList}>
-              <input type="text" name='toname' />
-              <button>Save</button>
-            </form>
-            
+      <h1>To-Do List</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Enter task..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+        />
+        <button>{editIndex !== null ? "Update" : "Add"}</button>
+      </form>
 
-            <div className='outerDiv'>
-            <ul>
-              {list}
-            </ul>
-            </div>
+      <ul>
+        {todolist.map((task, index) => (
+          <ToDoItem
+            key={index}
+            value={task}
+            index={index}
+            handleEdit={handleEdit}
+            handleDelete={handleDelete}
+          />
+        ))}
+      </ul>
 
-
-    </div>
       
+      <footer className="footer">@made by Manish Singh</footer>
+    </div>
   );
 }
 
 export default App;
 
-
-function ToDoListItems({value , indexNumber , todolist , setTodolist}){
-
-  let [status , setStatus] = useState(false);
-
-  let deleteRow = ()=>{
-    let finalData = todolist.filter((v,i) => i != indexNumber)
-    setTodolist(finalData);
-  }
-
-
-  let any=()=>{
-    setStatus(!status)
-  }
-
+function ToDoItem({ value, index, handleEdit, handleDelete }) {
+  const [status, setStatus] = useState(false);
 
   return (
-    <li className={(status) ? 'compelete' : ""} onClick={any}>{indexNumber+1}   {value} <span onClick={deleteRow}>&times;</span></li>
-  )
+    <li className={status ? "completed" : ""}>
+      <span onClick={() => setStatus(!status)}>
+        {index + 1}. {value}
+      </span>
+      <div className="btn-container">
+        <button className="btn-edit" onClick={() => handleEdit(index)}>
+          Edit
+        </button>
+        <button className="btn-delete" onClick={() => handleDelete(index)}>
+          Delete
+        </button>
+      </div>
+    </li>
+  );
 }
